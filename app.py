@@ -4,47 +4,32 @@ from flask import Flask, jsonify
 
 app = Flask(__name__)
 
-RAILWAY_API_URL = "https://backboard.railway.app/graphql/v2"
-RAILWAY_TOKEN = os.getenv("RAILWAY_TOKEN")
+URL = "https://backboard.railway.app/graphql/v2"
+TOKEN = os.getenv("RAILWAY_API_TOKEN")
 SERVICE_ID = os.getenv("SERVICE_ID")
+ENV_ID = os.getenv("ENVIRONMENT_ID")
 
 @app.route("/restart", methods=["GET"])
-def restart_service():
-    if not SERVICE_ID:
-        return jsonify({"error": "SERVICE_ID is not set"}), 400
-    if not RAILWAY_TOKEN:
-        return jsonify({"error": "RAILWAY_TOKEN is not set"}), 400
+def restart():
+    if not all([TOKEN, SERVICE_ID, ENV_ID]):
+        return jsonify({"error": "Missing SERVICE_ID or ENVIRONMENT_ID or token"}), 400
 
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {RAILWAY_TOKEN}",
-    }
-
+    headers = {"Content-Type": "application/json", "Authorization": f"Bearer {TOKEN}"}
     payload = {
         "query": """
-            mutation DeployService($input: DeployServiceInput!) {
-                deployService(input: $input) {
-                    id
-                    createdAt
-                }
-            }
-        """,
-        "variables": {
-            "input": {
-                "serviceId": SERVICE_ID
-            }
+        mutation serviceInstanceRedeploy($environmentId: String!, $serviceId: String!) {
+          serviceInstanceRedeploy(environmentId: $environmentId, serviceId: $serviceId)
         }
+        """,
+        "variables": {"environmentId": ENV_ID, "serviceId": SERVICE_ID}
     }
 
     try:
-        response = requests.post(RAILWAY_API_URL, headers=headers, json=payload)
-        response.raise_for_status()
-        return jsonify(response.json())
-    except requests.HTTPError as http_err:
-        return jsonify({
-            "error": str(http_err),
-            "response": response.text
-        }), response.status_code
+        resp = requests.post(URL, json=payload, headers=headers)
+        resp.raise_for_status()
+        return jsonify(resp.json())
+    except requests.HTTPError:
+        return jsonify({"status": resp.status_code, "response": resp.text}), resp.status_code
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
