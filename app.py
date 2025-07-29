@@ -12,6 +12,8 @@ SERVICE_ID = os.getenv("SERVICE_ID")
 def restart_service():
     if not SERVICE_ID:
         return jsonify({"error": "SERVICE_ID is not set"}), 400
+    if not RAILWAY_API_TOKEN:
+        return jsonify({"error": "RAILWAY_API_TOKEN is not set"}), 400
 
     headers = {
         "Content-Type": "application/json",
@@ -38,7 +40,12 @@ def restart_service():
         response = requests.post(RAILWAY_API_URL, headers=headers, json=payload)
         response.raise_for_status()
         return jsonify(response.json())
-    except requests.RequestException as e:
+    except requests.HTTPError as http_err:
+        return jsonify({
+            "error": str(http_err),
+            "response": response.text
+        }), response.status_code
+    except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
