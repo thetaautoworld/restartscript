@@ -18,20 +18,24 @@ def restart_service():
         "Authorization": f"Bearer {RAILWAY_API_TOKEN}",
     }
 
-    query = {
-        "query": f"""
-        mutation {{
-            deployService(input: {{
-                serviceId: "{SERVICE_ID}"
-            }}) {{
-                id
-            }}
-        }}
-        """
+    payload = {
+        "query": """
+            mutation DeployService($input: DeployServiceInput!) {
+                deployService(input: $input) {
+                    id
+                    createdAt
+                }
+            }
+        """,
+        "variables": {
+            "input": {
+                "serviceId": SERVICE_ID
+            }
+        }
     }
 
     try:
-        response = requests.post(RAILWAY_API_URL, headers=headers, json=query)
+        response = requests.post(RAILWAY_API_URL, headers=headers, json=payload)
         response.raise_for_status()
         return jsonify(response.json())
     except requests.RequestException as e:
