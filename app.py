@@ -5,7 +5,7 @@ from flask import Flask, jsonify
 app = Flask(__name__)
 
 URL = "https://backboard.railway.app/graphql/v2"
-TOKEN = os.getenv("RAILWAY_API_TOKEN")
+TOKEN = os.getenv("RAILWAY_TOKEN")
 SERVICE_ID = os.getenv("SERVICE_ID")
 ENV_ID = os.getenv("ENVIRONMENT_ID")
 
