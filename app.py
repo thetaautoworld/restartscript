@@ -6,12 +6,12 @@ app = Flask(__name__)
 
 RAILWAY_API_URL = "https://backboard.railway.app/graphql/v2"
 RAILWAY_API_TOKEN = os.getenv("RAILWAY_API_TOKEN")
-DEPLOYMENT_ID = os.getenv("DEPLOYMENT_ID")
+SERVICE_ID = os.getenv("SERVICE_ID")
 
 @app.route("/restart", methods=["GET"])
-def restart_deployment():
-    if not DEPLOYMENT_ID:
-        return jsonify({"error": "DEPLOYMENT_ID is not set"}), 400
+def restart_service():
+    if not SERVICE_ID:
+        return jsonify({"error": "SERVICE_ID is not set"}), 400
 
     headers = {
         "Content-Type": "application/json",
@@ -21,7 +21,11 @@ def restart_deployment():
     query = {
         "query": f"""
         mutation {{
-            deploymentRestart(id: "{DEPLOYMENT_ID}")
+            deployService(input: {{
+                serviceId: "{SERVICE_ID}"
+            }}) {{
+                id
+            }}
         }}
         """
     }
